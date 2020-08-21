@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v1.11.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
+      type="text/css"
+    />
+    <!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.js"></script>
+<link
+rel="stylesheet"
+href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.0.2/mapbox-gl-directions.css"
+type="text/css"
+/>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+         /* margin-top: 100px; */
+      } 
+      #marker {
+        background-image: url("https://cdn3.iconfinder.com/data/icons/streamline-icon-set-free-pack/48/Streamline-66-32.png");
+        background-size: cover;
+        width: 30px;
+        height: 30px;
+        border-radius: 10%;
+        cursor: pointer;
+      }
+
+      .mapboxgl-popup {
+        max-width: 200px;
+      }
+
+      .coordinates {
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        padding: 5px 10px;
+        margin: 0;
+        font-size: 11px;
+        line-height: 18px;
+        border-radius: 3px;
+        display: none;
+      }
+      .directions {
+position: absolute;
+z-index: 1;
+/* width: 50%;*/
+left: 39%; 
+right: 39%; 
+top: 10px; 
+border:1px solid orangered  ;
+}
+    </style>
+    <title>Uber</title>
+  </head>
+  <body id="results">
+    
+    <div id="map"></div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <script>
+      mapboxgl.accessToken ="pk.eyJ1IjoiYWhham9yeTExNiIsImEiOiJja2R1OHJxYWwwZW13MzFzZ3ZvbG4yOXpoIn0.fN0S9xHQ8ip_0d7vtmfFvA";
+        
+      var hos = [145.11475,-37.84703];
+      var z = 14;
+      var map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: hos,
+        zoom: z,
+      });
+      /////
+      // create the popup
+      var popup = new mapboxgl.Popup({ offset: 25 }).setText(
+        "Hi!, I am at Deakin University."
+      );
+      // create DOM element for the marker
+      var el = document.createElement("div");
+      el.id = "marker";
+
+      // create the marker
+      var marker = new mapboxgl.Marker(el)
+        .setLngLat(hos)
+        .setDraggable(true)
+        .setPopup(popup) // sets a popup on this marker
+        .addTo(map);
+      
+      ///====
+      // Add zoom and rotation controls to the map.
+      map.addControl(new mapboxgl.NavigationControl());
+      
+      map.addControl(
+        new mapboxgl.FullscreenControl({
+          container: document.querySelector("body"),
+        })
+      );
+      //
+    
+      //////
+      map.on("load", function () {
+        
+        map.loadImage(
+          "https://cdn0.iconfinder.com/data/icons/isometric-city-basic-transport/480/car-taxi-front-01-64.png",
+          // Add an image to use as a custom marker
+          function (error, image) {
+            if (error) throw error;
+            map.addImage("custom-marker", image);
+
+            map.addSource("places", {
+              type: "geojson",
+              data: {
+                type: "FeatureCollection",
+                features: [
+                  {
+                    type: "Feature",
+                    properties: {
+                      description:
+                        "<strong>9 min</strong><p>At Burwood Highway, Middleborough Road</p>",
+                    },
+                    geometry: {
+                      type: "Point",
+                      coordinates: [145.13546682014828,-37.83515572404838],
+                    },
+                  },
+                  {
+                    type: "Feature",
+                    properties: {
+                      description:
+                        "<strong>5 min</strong><p>At Holland Avenue, 26</p>",
+                    },
+                    geometry: {
+                      type: "Point",
+                      coordinates: [145.11567775872868,-37.851435014623576], 
+                    },
+                  }
+                ],
+              },
+            });
+
+            ///
+            // Add a layer showing the places.
+            map.addLayer({
+              id: "places",
+              type: "symbol",
+              source: "places",
+              layout: {
+                "icon-image": "custom-marker",
+                "icon-allow-overlap": true,
+              },
+            });
+          }
+        ); //load img
+
+        // Create a popup, but don't add it to the map yet.
+        var popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        map.on('mouseenter', 'places', function(e) {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+
+            var coordinates = e.features[0].geometry.coordinates.slice();
+            var description = e.features[0].properties.description;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            popup
+                .setLngLat(coordinates)
+                .setHTML(description)
+                .addTo(map);
+        });
+
+        map.on('mouseleave', 'places', function() {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+    
+        map.on('click', 'places', function(e) {
+            var coordinates = e.features[0].geometry.coordinates.slice();
+            //var description = e.features[0].properties.description;
+            // alert(coordinates[0]+", "+coordinates[1]);
+             if(confirm("Confirm Driver Selection?")){
+              //alert(coordinates[0]+", "+coordinates[1]);
+             
+              $.post( '/pick-destination',{lng: coordinates[0], lat: coordinates[1] },function( data ) {
+                $('#results').html(data);
+});
+              
+              }//end if confirm
+        });//onclick
+
+      }); //onload
+
+    
+
+    
+      
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+
+    <div id="directions" class="directions"></div>
+    <div id="map"></div>
+    <pre id="coordinates" class="coordinates"></pre>
+    <script>
+      mapboxgl.accessToken ="pk.eyJ1IjoiYWhham9yeTExNiIsImEiOiJja2R1OHJxYWwwZW13MzFzZ3ZvbG4yOXpoIn0.fN0S9xHQ8ip_0d7vtmfFvA";
+        
+      var hos = [145.11475,-37.84703];
+      var z = 14;
+      var map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: hos,
+        zoom: z,
+      });
+      /////
+      // create the popup
+      var popup = new mapboxgl.Popup({ offset: 25 }).setText(
+        "Hi!, I am at Deakin University."
+      );
+      // create DOM element for the marker
+      var el = document.createElement("div");
+      el.id = "marker";
+
+      // create the marker
+      var marker = new mapboxgl.Marker(el)
+        .setLngLat(hos)
+        .setDraggable(true)
+        .setPopup(popup) // sets a popup on this marker
+        .addTo(map);
+      // map.addControl(
+    //  var geocoderr = new MapboxGeocoder({
+    //       accessToken: mapboxgl.accessToken,
+     
+    //       mapboxgl: mapboxgl,
+    //     });
+    //     map.addControl(geocoderr );
+      ////===
+      var directions = new MapboxDirections({
+        accessToken: mapboxgl.accessToken,
+        unit: 'metric',
+        profile: 'mapbox/driving',
+        controls: {profileSwitcher: false},
+        geocoder: {proximity:hos} ,
+        zoom: z
+      });
+//directions.setOrigin(hos);
+document.getElementById('directions').appendChild(directions.onAdd(map));
+//====map.addControl(directions, 'top-right');
+      ///====
+      // Add zoom and rotation controls to the map.
+      map.addControl(new mapboxgl.NavigationControl());
+      
+      map.addControl(
+        new mapboxgl.FullscreenControl({
+          container: document.querySelector("body"),
+        })
+      );
+      //
+    
+      //////
+      map.on("load", function () {
+        directions.setOrigin("Deakin University");
+        
+        
+        map.loadImage(
+          "https://cdn0.iconfinder.com/data/icons/isometric-city-basic-transport/480/car-taxi-front-01-64.png",
+          // Add an image to use as a custom marker
+          function (error, image) {
+            if (error) throw error;
+            map.addImage("custom-marker", image);
+
+            map.addSource("places", {
+              type: "geojson",
+              data: {
+                type: "FeatureCollection",
+                features: [
+                  {
+                    type: "Feature",
+                    properties: {
+                      description:
+                        "",
+                    },
+                    geometry: {
+                      type: "Point",
+                      coordinates: [<%= lng %>,<%= lat %>],
+                    },
+                  }
+                
+                ],
+              },
+            });
+
+            ///
+            // Add a layer showing the places.
+            map.addLayer({
+              id: "places",
+              type: "symbol",
+              source: "places",
+              layout: {
+                "icon-image": "custom-marker",
+                "icon-allow-overlap": true,
+              },
+            });
+          }
+        ); //load img
+
+       
+      }); //onload
+     
+    // function onDragEnd() {
+    //   var lngLat = marker.getLngLat();
+    //       coordinates.style.display = 'block';
+    //       coordinates.innerHTML =
+    //       'Longitude: ' + lngLat.lng + '<br />Latitude: ' + lngLat.lat;
+    //          //alert("Longitude: " + lngLat.lng + "   Latitude: " + lngLat.lat);
+    //   }
+
+    //   marker.on("dragend", onDragEnd);
+
+      /////////
+      directions.on('destination' ,function (e) {
+        
+        var destination=e.feature.geometry.coordinates.slice();
+        if(confirm("Confim Destination?")){
+        $.post( '/save-ride',{orgin:hos , dest: destination });
+      }
+
+        
+      //});                 
+       });
+
+    </script>
+  <!-- </body>
+</html> -->
